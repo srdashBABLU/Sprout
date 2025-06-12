@@ -1,0 +1,47 @@
+App : Sprout - The Tree Wizard !
+
+the app is being made for :
+    1. taking care of the plants, trees, sprouts...
+    2. Tracking the health of the plants..
+    3. Promoting Planting....
+    4. Recognising Plants..
+    5. identifying plant diseases...
+    6. etc.....
+
+features :
+    1. Simple, minimal ui.
+    2. Scoreboard of top plant lovers...
+    3. virtual garden to show what plants have you planted..
+    4. Plant Journal !
+    5. plant info..
+    6. etc....
+
+
+**** INFO:
+    we are planning to create a app that helps the users to take care of their plants,
+    tell them what their plants need by taking picture and past history,
+    watering, fertiliser recommendations and reminders,
+    blooming guide, let them know how their plant is affecting the environment !
+    let the users know suggestions of plants that they might need !
+    aware the users of the plant importance and benefits ! ......
+
+
+User Data :
+    Data We Will collect :
+        regular Plant Images, name.
+        Plant blooming, Growing.. etc
+        Plant lovers data !
+        Plant Lovers Region, location, age, gender, image, contact, preferences,
+
+    Data we will use for:
+        Training a industrial ai model that can help in plant and tree health monitoring for a sustainable environment..
+        Creating 3d models of the trees and plants for Game, Ar/Vr use cases (Virtual Green world)
+        Creating Animations of the plants and trees for use in movies..
+        Promoting Plants and agricultural products to interested users!
+        Industrial ai chatbot that will help the user engage with the plant !
+        Organising Mass Plantations
+        Developing Products that will help the environment such as :
+            Automatic Watering machine
+            Automatic fertiliser Machine
+            Soil health analyser machine
+            etc....
