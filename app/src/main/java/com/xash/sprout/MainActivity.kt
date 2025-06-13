@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.xash.sprout.app.ui.dilaogues.DemoDialogueTest
-import com.xash.sprout.app.ui.splash.SplashScreen
 import com.xash.sprout.ui.theme.SproutTheTreeWizardTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
