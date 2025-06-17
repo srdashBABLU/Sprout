@@ -100,6 +100,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.7.1") // DASH streaming
     implementation("androidx.media3:media3-exoplayer-hls:1.7.1")   // HLS streaming
 
+    // youtube video player !
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
