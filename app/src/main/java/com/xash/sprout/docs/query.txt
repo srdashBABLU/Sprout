@@ -1,0 +1,1642 @@
+-- PLANT RESEARCH DATABASE SCHEMA
+-- Comprehensive database for trees, plants, algae and all plant varieties
+
+-- ============================================================================
+-- TAXONOMIC CLASSIFICATION TABLES
+-- ============================================================================
+
+CREATE TABLE kingdoms (
+    kingdom_id INT PRIMARY KEY AUTO_INCREMENT,
+    kingdom_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE phyla (
+    phylum_id INT PRIMARY KEY AUTO_INCREMENT,
+    kingdom_id INT NOT NULL,
+    phylum_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (kingdom_id) REFERENCES kingdoms(kingdom_id),
+    UNIQUE KEY unique_phylum_per_kingdom (kingdom_id, phylum_name)
+);
+
+CREATE TABLE classes (
+    class_id INT PRIMARY KEY AUTO_INCREMENT,
+    phylum_id INT NOT NULL,
+    class_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (phylum_id) REFERENCES phyla(phylum_id),
+    UNIQUE KEY unique_class_per_phylum (phylum_id, class_name)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY AUTO_INCREMENT,
+    class_id INT NOT NULL,
+    order_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(class_id),
+    UNIQUE KEY unique_order_per_class (class_id, order_name)
+);
+
+CREATE TABLE families (
+    family_id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    family_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    common_characteristics TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    UNIQUE KEY unique_family_per_order (order_id, family_name)
+);
+
+CREATE TABLE genera (
+    genus_id INT PRIMARY KEY AUTO_INCREMENT,
+    family_id INT NOT NULL,
+    genus_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (family_id) REFERENCES families(family_id),
+    UNIQUE KEY unique_genus_per_family (family_id, genus_name)
+);
+
+-- ============================================================================
+-- MAIN SPECIES TABLE
+-- ============================================================================
+
+CREATE TABLE species (
+    species_id INT PRIMARY KEY AUTO_INCREMENT,
+    genus_id INT NOT NULL,
+    species_name VARCHAR(100) NOT NULL,
+    scientific_name VARCHAR(200) NOT NULL UNIQUE,
+    common_names TEXT,
+    discovery_date DATE,
+    discoverer VARCHAR(200),
+    iucn_status ENUM('LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX', 'DD', 'NE') DEFAULT 'NE',
+    description TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (genus_id) REFERENCES genera(genus_id),
+    UNIQUE KEY unique_species_per_genus (genus_id, species_name),
+    INDEX idx_scientific_name (scientific_name),
+    INDEX idx_iucn_status (iucn_status)
+);
+
+-- ============================================================================
+-- PLANT CLASSIFICATION AND CHARACTERISTICS
+-- ============================================================================
+
+CREATE TABLE plant_types (
+    plant_type_id INT PRIMARY KEY AUTO_INCREMENT,
+    type_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE plant_characteristics (
+    characteristic_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    plant_type_id INT,
+    life_cycle ENUM('Annual', 'Biennial', 'Perennial', 'Unknown') DEFAULT 'Unknown',
+    growth_habit ENUM('Tree', 'Shrub', 'Herb', 'Vine', 'Grass', 'Fern', 'Moss', 'Algae', 'Lichen', 'Other') DEFAULT 'Other',
+    size_category ENUM('Microscopic', 'Small', 'Medium', 'Large', 'Giant') DEFAULT 'Medium',
+    height_min_cm DECIMAL(10,2),
+    height_max_cm DECIMAL(10,2),
+    width_min_cm DECIMAL(10,2),
+    width_max_cm DECIMAL(10,2),
+    photosynthesis_type ENUM('C3', 'C4', 'CAM', 'Non-photosynthetic') DEFAULT 'C3',
+    vascular_type ENUM('Vascular', 'Non-vascular', 'Unknown') DEFAULT 'Unknown',
+    reproduction_type ENUM('Sexual', 'Asexual', 'Both', 'Unknown') DEFAULT 'Unknown',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (plant_type_id) REFERENCES plant_types(plant_type_id)
+);
+
+-- ============================================================================
+-- ROOT SYSTEM DETAILS
+-- ============================================================================
+
+CREATE TABLE root_systems (
+    root_system_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    root_type ENUM('Taproot', 'Fibrous', 'Adventitious', 'Aerial', 'Storage', 'Parasitic', 'Unknown') DEFAULT 'Unknown',
+    depth_min_cm DECIMAL(10,2),
+    depth_max_cm DECIMAL(10,2),
+    spread_min_cm DECIMAL(10,2),
+    spread_max_cm DECIMAL(10,2),
+    root_description TEXT,
+    nodulation BOOLEAN DEFAULT FALSE,
+    mycorrhizal_association ENUM('Ectomycorrhizal', 'Endomycorrhizal', 'Both', 'None', 'Unknown') DEFAULT 'Unknown',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- STEM/TRUNK CHARACTERISTICS
+-- ============================================================================
+
+CREATE TABLE stem_characteristics (
+    stem_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    stem_type ENUM('Herbaceous', 'Woody', 'Succulent', 'Modified', 'Absent') DEFAULT 'Herbaceous',
+    bark_type VARCHAR(100),
+    bark_texture VARCHAR(100),
+    bark_color VARCHAR(100),
+    diameter_min_cm DECIMAL(10,2),
+    diameter_max_cm DECIMAL(10,2),
+    branching_pattern ENUM('Opposite', 'Alternate', 'Whorled', 'None') DEFAULT 'Alternate',
+    growth_rings BOOLEAN DEFAULT FALSE,
+    wood_density DECIMAL(5,2),
+    stem_description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- LEAF CHARACTERISTICS
+-- ============================================================================
+
+CREATE TABLE leaf_characteristics (
+    leaf_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    leaf_type ENUM('Simple', 'Compound', 'Needle', 'Scale', 'Absent') DEFAULT 'Simple',
+    leaf_arrangement ENUM('Opposite', 'Alternate', 'Whorled', 'Rosette') DEFAULT 'Alternate',
+    leaf_shape VARCHAR(100),
+    leaf_margin VARCHAR(100),
+    leaf_apex VARCHAR(100),
+    leaf_base VARCHAR(100),
+    leaf_venation ENUM('Parallel', 'Pinnate', 'Palmate', 'Dichotomous') DEFAULT 'Pinnate',
+    length_min_cm DECIMAL(8,2),
+    length_max_cm DECIMAL(8,2),
+    width_min_cm DECIMAL(8,2),
+    width_max_cm DECIMAL(8,2),
+    leaf_color VARCHAR(100),
+    seasonal_color_change TEXT,
+    surface_texture VARCHAR(100),
+    pubescence ENUM('Glabrous', 'Pubescent', 'Tomentose', 'Hirsute', 'Scabrous') DEFAULT 'Glabrous',
+    stomata_type ENUM('Anomocytic', 'Anisocytic', 'Paracytic', 'Diacytic', 'Actinocytic') DEFAULT 'Anomocytic',
+    stomata_density_per_mm2 INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- FLOWER CHARACTERISTICS
+-- ============================================================================
+
+CREATE TABLE flower_characteristics (
+    flower_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    flower_type ENUM('Perfect', 'Imperfect', 'Complete', 'Incomplete', 'Absent') DEFAULT 'Perfect',
+    inflorescence_type VARCHAR(100),
+    flower_symmetry ENUM('Actinomorphic', 'Zygomorphic', 'Asymmetric') DEFAULT 'Actinomorphic',
+    flower_size_mm DECIMAL(8,2),
+    petal_count INT,
+    petal_color VARCHAR(100),
+    petal_shape VARCHAR(100),
+    sepal_count INT,
+    sepal_color VARCHAR(100),
+    stamen_count INT,
+    pistil_count INT,
+    ovary_position ENUM('Superior', 'Inferior', 'Half-inferior') DEFAULT 'Superior',
+    flowering_season VARCHAR(100),
+    flowering_duration_days INT,
+    pollination_method ENUM('Wind', 'Insect', 'Bird', 'Bat', 'Water', 'Self', 'Multiple') DEFAULT 'Insect',
+    nectar_production BOOLEAN DEFAULT FALSE,
+    fragrance VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- FRUIT AND SEED CHARACTERISTICS
+-- ============================================================================
+
+CREATE TABLE fruit_characteristics (
+    fruit_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    fruit_type VARCHAR(100),
+    fruit_classification ENUM('Simple', 'Aggregate', 'Multiple', 'Accessory') DEFAULT 'Simple',
+    fruit_dehiscence ENUM('Dehiscent', 'Indehiscent', 'Schizocarpic') DEFAULT 'Indehiscent',
+    fruit_color VARCHAR(100),
+    fruit_shape VARCHAR(100),
+    fruit_size_mm DECIMAL(8,2),
+    fruit_weight_g DECIMAL(8,2),
+    fruiting_season VARCHAR(100),
+    dispersal_method ENUM('Wind', 'Water', 'Animal', 'Explosive', 'Gravity', 'Human') DEFAULT 'Animal',
+    edibility ENUM('Edible', 'Toxic', 'Medicinal', 'Unknown') DEFAULT 'Unknown',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+CREATE TABLE seed_characteristics (
+    seed_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    seed_type VARCHAR(100),
+    seed_shape VARCHAR(100),
+    seed_color VARCHAR(100),
+    seed_size_mm DECIMAL(6,2),
+    seed_weight_mg DECIMAL(8,2),
+    seed_coat_type VARCHAR(100),
+    endosperm_type ENUM('Albuminous', 'Exalbuminous', 'Perispermous') DEFAULT 'Albuminous',
+    germination_type ENUM('Epigeal', 'Hypogeal') DEFAULT 'Epigeal',
+    germination_time_days INT,
+    viability_years DECIMAL(4,1),
+    dormancy_type VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- CELLULAR STRUCTURE TABLES
+-- ============================================================================
+
+CREATE TABLE cell_types (
+    cell_type_id INT PRIMARY KEY AUTO_INCREMENT,
+    cell_type_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    function_description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cellular_structures (
+    structure_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    organ_type ENUM('Root', 'Stem', 'Leaf', 'Flower', 'Fruit', 'Seed', 'Whole_organism') DEFAULT 'Whole_organism',
+    cell_type_id INT,
+    cell_wall_thickness_micrometers DECIMAL(8,3),
+    cell_wall_composition TEXT,
+    chloroplast_count INT,
+    chloroplast_type VARCHAR(100),
+    vacuole_percentage DECIMAL(5,2),
+    nucleus_characteristics TEXT,
+    specialized_organelles TEXT,
+    tissue_type VARCHAR(100),
+    vascular_bundle_arrangement VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (cell_type_id) REFERENCES cell_types(cell_type_id)
+);
+
+-- ============================================================================
+-- ANATOMICAL DIAGRAMS AND STRUCTURES
+-- ============================================================================
+
+CREATE TABLE anatomical_diagrams (
+    diagram_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    diagram_type ENUM('Cross_section', 'Longitudinal_section', 'Surface_view', 'Cellular_detail', 'Organ_structure') DEFAULT 'Cross_section',
+    organ_part VARCHAR(100),
+    magnification VARCHAR(50),
+    staining_method VARCHAR(100),
+    diagram_description TEXT,
+    file_path VARCHAR(500),
+    file_format ENUM('JPG', 'PNG', 'SVG', 'PDF', 'TIFF') DEFAULT 'PNG',
+    resolution_dpi INT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- 3D MODEL MANAGEMENT
+-- ============================================================================
+
+CREATE TABLE model_3d (
+    model_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    model_type ENUM('Whole_plant', 'Root_system', 'Stem', 'Leaf', 'Flower', 'Fruit', 'Cellular_structure') DEFAULT 'Whole_plant',
+    model_name VARCHAR(200) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_format ENUM('OBJ', 'FBX', 'DAE', 'PLY', 'STL', '3DS', 'BLEND') DEFAULT 'OBJ',
+    file_size_mb DECIMAL(10,2),
+    polygon_count INT,
+    texture_included BOOLEAN DEFAULT FALSE,
+    animation_included BOOLEAN DEFAULT FALSE,
+    scale_factor DECIMAL(10,6),
+    modeling_software VARCHAR(100),
+    model_description TEXT,
+    quality_level ENUM('Low', 'Medium', 'High', 'Ultra') DEFAULT 'Medium',
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- HABITAT AND ENVIRONMENTAL CONDITIONS
+-- ============================================================================
+
+CREATE TABLE soil_types (
+    soil_type_id INT PRIMARY KEY AUTO_INCREMENT,
+    soil_name VARCHAR(100) NOT NULL UNIQUE,
+    soil_classification VARCHAR(100),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE soil_compositions (
+    composition_id INT PRIMARY KEY AUTO_INCREMENT,
+    soil_type_id INT NOT NULL,
+    sand_percentage DECIMAL(5,2),
+    silt_percentage DECIMAL(5,2),
+    clay_percentage DECIMAL(5,2),
+    organic_matter_percentage DECIMAL(5,2),
+    ph_min DECIMAL(4,2),
+    ph_max DECIMAL(4,2),
+    nitrogen_content_ppm DECIMAL(8,2),
+    phosphorus_content_ppm DECIMAL(8,2),
+    potassium_content_ppm DECIMAL(8,2),
+    calcium_content_ppm DECIMAL(8,2),
+    magnesium_content_ppm DECIMAL(8,2),
+    sulfur_content_ppm DECIMAL(8,2),
+    drainage_level ENUM('Excellent', 'Good', 'Moderate', 'Poor', 'Very_poor') DEFAULT 'Moderate',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (soil_type_id) REFERENCES soil_types(soil_type_id)
+);
+
+CREATE TABLE habitats (
+    habitat_id INT PRIMARY KEY AUTO_INCREMENT,
+    habitat_name VARCHAR(200) NOT NULL,
+    biome_type VARCHAR(100),
+    climate_zone VARCHAR(100),
+    elevation_min_m INT,
+    elevation_max_m INT,
+    temperature_min_c DECIMAL(5,2),
+    temperature_max_c DECIMAL(5,2),
+    annual_rainfall_mm DECIMAL(8,2),
+    humidity_percentage DECIMAL(5,2),
+    light_requirements ENUM('Full_sun', 'Partial_sun', 'Shade', 'Deep_shade', 'Variable') DEFAULT 'Partial_sun',
+    water_requirements ENUM('Aquatic', 'Wet', 'Moist', 'Moderate', 'Dry', 'Drought_tolerant') DEFAULT 'Moderate',
+    habitat_description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE species_habitats (
+    species_habitat_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    habitat_id INT NOT NULL,
+    soil_type_id INT,
+    abundance ENUM('Dominant', 'Abundant', 'Common', 'Occasional', 'Rare') DEFAULT 'Common',
+    native_status ENUM('Native', 'Endemic', 'Introduced', 'Naturalized', 'Invasive') DEFAULT 'Native',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (habitat_id) REFERENCES habitats(habitat_id),
+    FOREIGN KEY (soil_type_id) REFERENCES soil_types(soil_type_id),
+    UNIQUE KEY unique_species_habitat (species_id, habitat_id)
+);
+
+-- ============================================================================
+-- GEOGRAPHIC DISTRIBUTION
+-- ============================================================================
+
+CREATE TABLE continents (
+    continent_id INT PRIMARY KEY AUTO_INCREMENT,
+    continent_name VARCHAR(50) NOT NULL UNIQUE,
+    continent_code VARCHAR(2) NOT NULL UNIQUE
+);
+
+CREATE TABLE countries (
+    country_id INT PRIMARY KEY AUTO_INCREMENT,
+    continent_id INT NOT NULL,
+    country_name VARCHAR(100) NOT NULL,
+    country_code VARCHAR(3) NOT NULL UNIQUE,
+    FOREIGN KEY (continent_id) REFERENCES continents(continent_id)
+);
+
+CREATE TABLE species_distribution (
+    distribution_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    country_id INT NOT NULL,
+    region_state VARCHAR(100),
+    locality TEXT,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    elevation_m INT,
+    population_size ENUM('Unknown', 'Very_small', 'Small', 'Medium', 'Large', 'Very_large') DEFAULT 'Unknown',
+    population_trend ENUM('Increasing', 'Stable', 'Decreasing', 'Unknown') DEFAULT 'Unknown',
+    first_recorded DATE,
+    last_observed DATE,
+    observation_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (country_id) REFERENCES countries(country_id)
+);
+
+-- ============================================================================
+-- CHEMICAL COMPOSITION AND PROPERTIES
+-- ============================================================================
+
+CREATE TABLE chemical_compounds (
+    compound_id INT PRIMARY KEY AUTO_INCREMENT,
+    compound_name VARCHAR(200) NOT NULL,
+    chemical_formula VARCHAR(100),
+    molecular_weight DECIMAL(10,3),
+    compound_type ENUM('Alkaloid', 'Phenolic', 'Terpenoid', 'Glycoside', 'Protein', 'Carbohydrate', 'Lipid', 'Other') DEFAULT 'Other',
+    biological_activity TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE species_chemistry (
+    chemistry_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    compound_id INT NOT NULL,
+    plant_part ENUM('Root', 'Stem', 'Bark', 'Leaf', 'Flower', 'Fruit', 'Seed', 'Whole_plant') DEFAULT 'Whole_plant',
+    concentration_percentage DECIMAL(8,4),
+    extraction_method VARCHAR(100),
+    seasonal_variation TEXT,
+    medicinal_use TEXT,
+    toxicity_level ENUM('Non-toxic', 'Mildly_toxic', 'Moderately_toxic', 'Highly_toxic', 'Unknown') DEFAULT 'Unknown',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (compound_id) REFERENCES chemical_compounds(compound_id)
+);
+
+-- ============================================================================
+-- GENETIC INFORMATION
+-- ============================================================================
+
+CREATE TABLE genetic_data (
+    genetic_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    chromosome_count INT,
+    genome_size_mbp DECIMAL(10,2),
+    ploidy_level INT DEFAULT 2,
+    gene_count INT,
+    gc_content_percentage DECIMAL(5,2),
+    chloroplast_genome_size_bp INT,
+    mitochondrial_genome_size_bp INT,
+    sequencing_status ENUM('Complete', 'Draft', 'Partial', 'Not_sequenced') DEFAULT 'Not_sequenced',
+    genbank_accession VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- ECONOMIC AND CULTURAL IMPORTANCE
+-- ============================================================================
+
+CREATE TABLE economic_uses (
+    use_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    use_category ENUM('Food', 'Medicine', 'Timber', 'Fiber', 'Ornamental', 'Industrial', 'Environmental', 'Cultural', 'Other') DEFAULT 'Other',
+    use_description TEXT,
+    economic_value ENUM('Very_high', 'High', 'Medium', 'Low', 'Very_low', 'Unknown') DEFAULT 'Unknown',
+    cultivation_status ENUM('Wild', 'Cultivated', 'Domesticated', 'Both') DEFAULT 'Wild',
+    market_availability ENUM('Widely_available', 'Locally_available', 'Rare', 'Not_available') DEFAULT 'Not_available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- RESEARCH AND LITERATURE
+-- ============================================================================
+
+CREATE TABLE research_papers (
+    paper_id INT PRIMARY KEY AUTO_INCREMENT,
+    title TEXT NOT NULL,
+    authors TEXT NOT NULL,
+    journal_name VARCHAR(200),
+    publication_year INT,
+    volume VARCHAR(20),
+    issue VARCHAR(20),
+    pages VARCHAR(50),
+    doi VARCHAR(100),
+    pmid VARCHAR(20),
+    abstract TEXT,
+    keywords TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE species_research (
+    species_research_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    paper_id INT NOT NULL,
+    research_focus TEXT,
+    key_findings TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (paper_id) REFERENCES research_papers(paper_id),
+    UNIQUE KEY unique_species_paper (species_id, paper_id)
+);
+
+-- ============================================================================
+-- IMAGES AND MEDIA
+-- ============================================================================
+
+CREATE TABLE images (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    image_type ENUM('Whole_plant', 'Habitat', 'Root', 'Stem', 'Leaf', 'Flower', 'Fruit', 'Seed', 'Microscopic', 'Other') DEFAULT 'Whole_plant',
+    file_path VARCHAR(500) NOT NULL,
+    file_format ENUM('JPG', 'PNG', 'TIFF', 'RAW', 'SVG') DEFAULT 'JPG',
+    file_size_mb DECIMAL(8,2),
+    resolution_width INT,
+    resolution_height INT,
+    photographer VARCHAR(200),
+    photo_date DATE,
+    location TEXT,
+    equipment_used VARCHAR(200),
+    image_description TEXT,
+    copyright_info VARCHAR(300),
+    license_type ENUM('CC0', 'CC_BY', 'CC_BY_SA', 'CC_BY_NC', 'CC_BY_ND', 'CC_BY_NC_SA', 'CC_BY_NC_ND', 'All_rights_reserved', 'Public_domain') DEFAULT 'All_rights_reserved',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- USER MANAGEMENT SYSTEM
+-- ============================================================================
+
+CREATE TABLE user_roles (
+    role_id INT PRIMARY KEY AUTO_INCREMENT,
+    role_name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    permissions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    role_id INT NOT NULL,
+    institution VARCHAR(200),
+    department VARCHAR(100),
+    specialization TEXT,
+    country_id INT,
+    phone VARCHAR(20),
+    bio TEXT,
+    profile_image_path VARCHAR(500),
+    email_verified BOOLEAN DEFAULT FALSE,
+    account_status ENUM('Active', 'Inactive', 'Suspended', 'Pending') DEFAULT 'Pending',
+    last_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES user_roles(role_id),
+    FOREIGN KEY (country_id) REFERENCES countries(country_id),
+    INDEX idx_username (username),
+    INDEX idx_email (email),
+    INDEX idx_account_status (account_status)
+);
+
+CREATE TABLE user_sessions (
+    session_id VARCHAR(128) PRIMARY KEY,
+    user_id INT NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expires_at (expires_at)
+);
+
+-- ============================================================================
+-- LOGGING SYSTEM
+-- ============================================================================
+
+CREATE TABLE activity_logs (
+    log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    action_type ENUM('CREATE', 'READ', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'SEARCH', 'EXPORT', 'IMPORT') NOT NULL,
+    table_name VARCHAR(100),
+    record_id INT,
+    old_values JSON,
+    new_values JSON,
+    description TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_user_id_action (user_id, action_type),
+    INDEX idx_table_record (table_name, record_id),
+    INDEX idx_created_at (created_at)
+);
+
+CREATE TABLE system_logs (
+    log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    log_level ENUM('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL') NOT NULL,
+    component VARCHAR(100),
+    message TEXT NOT NULL,
+    context JSON,
+    server_name VARCHAR(100),
+    process_id INT,
+    memory_usage_mb DECIMAL(10,2),
+    execution_time_ms DECIMAL(10,3),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_log_level (log_level),
+    INDEX idx_component (component),
+    INDEX idx_created_at (created_at)
+);
+
+CREATE TABLE error_logs (
+    error_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    error_type VARCHAR(100) NOT NULL,
+    error_code VARCHAR(20),
+    error_message TEXT NOT NULL,
+    stack_trace TEXT,
+    sql_query TEXT,
+    request_url VARCHAR(500),
+    request_method ENUM('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
+    request_parameters JSON,
+    http_status_code INT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    resolved BOOLEAN DEFAULT FALSE,
+    resolved_by INT,
+    resolved_at TIMESTAMP NULL,
+    resolution_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (resolved_by) REFERENCES users(user_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_error_type (error_type),
+    INDEX idx_resolved (resolved),
+    INDEX idx_created_at (created_at)
+);
+
+CREATE TABLE performance_logs (
+    perf_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    operation_type VARCHAR(100) NOT NULL,
+    operation_details TEXT,
+    execution_time_ms DECIMAL(10,3) NOT NULL,
+    memory_peak_mb DECIMAL(10,2),
+    cpu_usage_percent DECIMAL(5,2),
+    query_count INT DEFAULT 0,
+    cache_hits INT DEFAULT 0,
+    cache_misses INT DEFAULT 0,
+    records_processed INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_operation_type (operation_type),
+    INDEX idx_execution_time (execution_time_ms),
+    INDEX idx_created_at (created_at)
+);
+
+-- ============================================================================
+-- DATA INTEGRITY AND VERSIONING
+-- ============================================================================
+
+CREATE TABLE data_versions (
+    version_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    table_name VARCHAR(100) NOT NULL,
+    record_id INT NOT NULL,
+    version_number INT NOT NULL DEFAULT 1,
+    data_snapshot JSON NOT NULL,
+    change_summary TEXT,
+    changed_by INT NOT NULL,
+    change_reason TEXT,
+    approved_by INT,
+    approved_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id),
+    FOREIGN KEY (approved_by) REFERENCES users(user_id),
+    UNIQUE KEY unique_table_record_version (table_name, record_id, version_number),
+    INDEX idx_table_record (table_name, record_id),
+    INDEX idx_changed_by (changed_by),
+    INDEX idx_created_at (created_at)
+);
+
+CREATE TABLE data_validations (
+    validation_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    table_name VARCHAR(100) NOT NULL,
+    record_id INT NOT NULL,
+    field_name VARCHAR(100),
+    validation_rule VARCHAR(200) NOT NULL,
+    validation_status ENUM('PASSED', 'FAILED', 'WARNING', 'PENDING') NOT NULL,
+    validation_message TEXT,
+    validated_by INT,
+    validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (validated_by) REFERENCES users(user_id),
+    INDEX idx_table_record (table_name, record_id),
+    INDEX idx_validation_status (validation_status),
+    INDEX idx_validated_at (validated_at)
+);
+
+-- ============================================================================
+-- SPECIMEN AND COLLECTION MANAGEMENT
+-- ============================================================================
+
+CREATE TABLE institutions (
+    institution_id INT PRIMARY KEY AUTO_INCREMENT,
+    institution_name VARCHAR(200) NOT NULL,
+    institution_code VARCHAR(20) UNIQUE,
+    institution_type ENUM('Herbarium', 'Botanical_Garden', 'Museum', 'University', 'Research_Institute', 'Private', 'Other') DEFAULT 'Other',
+    address TEXT,
+    city VARCHAR(100),
+    country_id INT,
+    contact_person VARCHAR(200),
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    website VARCHAR(200),
+    established_year INT,
+    specimen_count_estimate INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (country_id) REFERENCES countries(country_id)
+);
+
+CREATE TABLE collectors (
+    collector_id INT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    middle_names VARCHAR(200),
+    birth_date DATE,
+    death_date DATE,
+    nationality VARCHAR(100),
+    specialization TEXT,
+    biography TEXT,
+    major_expeditions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_full_name (last_name, first_name)
+);
+
+CREATE TABLE specimens (
+    specimen_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    institution_id INT NOT NULL,
+    collector_id INT,
+    collection_number VARCHAR(50),
+    catalog_number VARCHAR(100) NOT NULL,
+    collection_date DATE,
+    collection_location TEXT,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    elevation_m INT,
+    habitat_description TEXT,
+    specimen_type ENUM('Holotype', 'Isotype', 'Paratype', 'Syntype', 'Lectotype', 'Neotype', 'Voucher', 'General') DEFAULT 'General',
+    preservation_method ENUM('Dried', 'Alcohol', 'Glycerin', 'Frozen', 'Living', 'Other') DEFAULT 'Dried',
+    specimen_condition ENUM('Excellent', 'Good', 'Fair', 'Poor', 'Fragmentary') DEFAULT 'Good',
+    parts_collected SET('Root', 'Stem', 'Leaf', 'Flower', 'Fruit', 'Seed', 'Whole_plant'),
+    field_notes TEXT,
+    determiner VARCHAR(200),
+    determination_date DATE,
+    determination_confidence ENUM('Certain', 'Probable', 'Uncertain') DEFAULT 'Certain',
+    loan_status ENUM('Available', 'On_loan', 'Permanently_loaned', 'Lost', 'Destroyed') DEFAULT 'Available',
+    digitized BOOLEAN DEFAULT FALSE,
+    image_count INT DEFAULT 0,
+    barcode VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (institution_id) REFERENCES institutions(institution_id),
+    FOREIGN KEY (collector_id) REFERENCES collectors(collector_id),
+    UNIQUE KEY unique_institution_catalog (institution_id, catalog_number),
+    INDEX idx_collection_date (collection_date),
+    INDEX idx_specimen_type (specimen_type),
+    INDEX idx_location (latitude, longitude)
+);
+
+-- ============================================================================
+-- CULTIVATION AND PROPAGATION
+-- ============================================================================
+
+CREATE TABLE cultivation_requirements (
+    cultivation_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    hardiness_zone_min VARCHAR(10),
+    hardiness_zone_max VARCHAR(10),
+    temperature_tolerance_min_c DECIMAL(5,2),
+    temperature_tolerance_max_c DECIMAL(5,2),
+    water_requirements ENUM('Very_low', 'Low', 'Moderate', 'High', 'Very_high') DEFAULT 'Moderate',
+    light_requirements ENUM('Full_shade', 'Partial_shade', 'Filtered_light', 'Partial_sun', 'Full_sun') DEFAULT 'Partial_sun',
+    soil_ph_min DECIMAL(3,1),
+    soil_ph_max DECIMAL(3,1),
+    soil_drainage ENUM('Well_drained', 'Moist', 'Wet', 'Waterlogged') DEFAULT 'Well_drained',
+    fertilizer_requirements TEXT,
+    pruning_requirements TEXT,
+    pest_susceptibility TEXT,
+    disease_susceptibility TEXT,
+    companion_plants TEXT,
+    growth_rate ENUM('Very_slow', 'Slow', 'Moderate', 'Fast', 'Very_fast') DEFAULT 'Moderate',
+    maintenance_level ENUM('Very_low', 'Low', 'Moderate', 'High', 'Very_high') DEFAULT 'Moderate',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+CREATE TABLE propagation_methods (
+    propagation_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    method_type ENUM('Seed', 'Cutting', 'Division', 'Grafting', 'Layering', 'Bulb', 'Spore', 'Tissue_culture') NOT NULL,
+    success_rate_percentage DECIMAL(5,2),
+    optimal_timing VARCHAR(100),
+    preparation_requirements TEXT,
+    environmental_conditions TEXT,
+    time_to_establishment_days INT,
+    special_considerations TEXT,
+    difficulty_level ENUM('Very_easy', 'Easy', 'Moderate', 'Difficult', 'Very_difficult') DEFAULT 'Moderate',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+-- ============================================================================
+-- CONSERVATION STATUS AND THREATS
+-- ============================================================================
+
+CREATE TABLE threat_categories (
+    threat_id INT PRIMARY KEY AUTO_INCREMENT,
+    threat_name VARCHAR(200) NOT NULL UNIQUE,
+    threat_type ENUM('Habitat_loss', 'Climate_change', 'Invasive_species', 'Overexploitation', 'Pollution', 'Disease', 'Natural_disasters', 'Human_disturbance', 'Other') DEFAULT 'Other',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE conservation_status (
+    status_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    assessment_year INT,
+    iucn_category ENUM('LC', 'NT', 'VU', 'EN', 'CR', 'EW', 'EX', 'DD', 'NE') NOT NULL,
+    population_trend ENUM('Increasing', 'Stable', 'Decreasing', 'Unknown') DEFAULT 'Unknown',
+    population_estimate_min BIGINT,
+    population_estimate_max BIGINT,
+    generation_length_years DECIMAL(5,2),
+    extent_of_occurrence_km2 DECIMAL(15,2),
+    area_of_occupancy_km2 DECIMAL(15,2),
+    number_of_locations INT,
+    assessment_criteria TEXT,
+    rationale TEXT,
+    assessor VARCHAR(200),
+    reviewer VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id)
+);
+
+CREATE TABLE species_threats (
+    species_threat_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    threat_id INT NOT NULL,
+    severity ENUM('Low', 'Medium', 'High', 'Very_high') DEFAULT 'Medium',
+    scope ENUM('Negligible', 'Minority', 'Majority', 'Whole', 'Unknown') DEFAULT 'Unknown',
+    timing ENUM('Past', 'Ongoing', 'Future', 'Past_and_ongoing', 'Ongoing_and_future', 'All_times') DEFAULT 'Ongoing',
+    threat_description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (threat_id) REFERENCES threat_categories(threat_id),
+    UNIQUE KEY unique_species_threat (species_id, threat_id)
+);
+
+-- ============================================================================
+-- MOLECULAR AND PHYLOGENETIC DATA
+-- ============================================================================
+
+CREATE TABLE dna_sequences (
+    sequence_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    gene_region VARCHAR(100) NOT NULL,
+    sequence_type ENUM('Nuclear', 'Chloroplast', 'Mitochondrial', 'Ribosomal') DEFAULT 'Nuclear',
+    sequence_data LONGTEXT NOT NULL,
+    sequence_length INT NOT NULL,
+    quality_score DECIMAL(5,2),
+    sequencing_method VARCHAR(100),
+    primer_forward VARCHAR(200),
+    primer_reverse VARCHAR(200),
+    genbank_accession VARCHAR(50),
+    ncbi_taxid INT,
+    specimen_voucher VARCHAR(100),
+    submitted_by INT,
+    submission_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (submitted_by) REFERENCES users(user_id),
+    INDEX idx_gene_region (gene_region),
+    INDEX idx_genbank_accession (genbank_accession)
+);
+
+CREATE TABLE phylogenetic_trees (
+    tree_id INT PRIMARY KEY AUTO_INCREMENT,
+    tree_name VARCHAR(200) NOT NULL,
+    dataset_description TEXT,
+    gene_regions_used TEXT,
+    analysis_method VARCHAR(100),
+    tree_format ENUM('Newick', 'Nexus', 'PhyloXML', 'NeXML') DEFAULT 'Newick',
+    tree_data LONGTEXT NOT NULL,
+    bootstrap_values BOOLEAN DEFAULT FALSE,
+    branch_lengths BOOLEAN DEFAULT TRUE,
+    outgroup_species TEXT,
+    number_of_taxa INT,
+    analysis_software VARCHAR(100),
+    created_by INT,
+    publication_reference TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
+);
+
+CREATE TABLE tree_species_mapping (
+    mapping_id INT PRIMARY KEY AUTO_INCREMENT,
+    tree_id INT NOT NULL,
+    species_id INT NOT NULL,
+    node_label VARCHAR(200),
+    branch_length DECIMAL(10,8),
+    bootstrap_support DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tree_id) REFERENCES phylogenetic_trees(tree_id),
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    UNIQUE KEY unique_tree_species (tree_id, species_id)
+);
+
+-- ============================================================================
+-- BIOCHEMICAL PATHWAYS AND METABOLISM
+-- ============================================================================
+
+CREATE TABLE metabolic_pathways (
+    pathway_id INT PRIMARY KEY AUTO_INCREMENT,
+    pathway_name VARCHAR(200) NOT NULL UNIQUE,
+    pathway_type ENUM('Primary', 'Secondary', 'Photosynthesis', 'Respiration', 'Nitrogen_fixation', 'Other') DEFAULT 'Other',
+    description TEXT,
+    kegg_pathway_id VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE enzymes (
+    enzyme_id INT PRIMARY KEY AUTO_INCREMENT,
+    enzyme_name VARCHAR(200) NOT NULL,
+    ec_number VARCHAR(20),
+    enzyme_class ENUM('Oxidoreductase', 'Transferase', 'Hydrolase', 'Lyase', 'Isomerase', 'Ligase') DEFAULT 'Oxidoreductase',
+    substrate TEXT,
+    product TEXT,
+    cofactors TEXT,
+    optimal_ph DECIMAL(3,1),
+    optimal_temperature_c DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE species_pathways (
+    species_pathway_id INT PRIMARY KEY AUTO_INCREMENT,
+    species_id INT NOT NULL,
+    pathway_id INT NOT NULL,
+    enzyme_id INT,
+    expression_level ENUM('High', 'Medium', 'Low', 'Absent', 'Unknown') DEFAULT 'Unknown',
+    tissue_specificity TEXT,
+    developmental_stage TEXT,
+    environmental_regulation TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    FOREIGN KEY (pathway_id) REFERENCES metabolic_pathways(pathway_id),
+    FOREIGN KEY (enzyme_id) REFERENCES enzymes(enzyme_id),
+    UNIQUE KEY unique_species_pathway (species_id, pathway_id, enzyme_id)
+);
+
+-- ============================================================================
+-- FIELD RESEARCH AND OBSERVATIONS
+-- ============================================================================
+
+CREATE TABLE field_studies (
+    study_id INT PRIMARY KEY AUTO_INCREMENT,
+    study_name VARCHAR(200) NOT NULL,
+    principal_investigator VARCHAR(200) NOT NULL,
+    institution_id INT,
+    study_type ENUM('Ecological', 'Taxonomic', 'Physiological', 'Behavioral', 'Conservation', 'Other') DEFAULT 'Ecological',
+    start_date DATE,
+    end_date DATE,
+    location_description TEXT,
+    study_objectives TEXT,
+    methodology TEXT,
+    funding_source VARCHAR(200),
+    permit_numbers TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (institution_id) REFERENCES institutions(institution_id)
+);
+
+CREATE TABLE field_observations (
+    observation_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    study_id INT,
+    species_id INT NOT NULL,
+    observer_name VARCHAR(200) NOT NULL,
+    observation_date DATE NOT NULL,
+    observation_time TIME,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    elevation_m INT,
+    weather_conditions TEXT,
+    temperature_c DECIMAL(5,2),
+    humidity_percent DECIMAL(5,2),
+    phenological_stage ENUM('Vegetative', 'Budding', 'Flowering', 'Fruiting', 'Seed_dispersal', 'Dormant', 'Senescence') DEFAULT 'Vegetative',
+    individual_count INT,
+    health_status ENUM('Healthy', 'Stressed', 'Diseased', 'Dying', 'Dead') DEFAULT 'Healthy',
+    associated_species TEXT,
+    disturbance_indicators TEXT,
+    photos_taken INT DEFAULT 0,
+    samples_collected BOOLEAN DEFAULT FALSE,
+    field_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (study_id) REFERENCES field_studies(study_id),
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    INDEX idx_observation_date (observation_date),
+    INDEX idx_location (latitude, longitude),
+    INDEX idx_phenological_stage (phenological_stage)
+);
+
+-- ============================================================================
+-- INDEXES FOR PERFORMANCE OPTIMIZATION
+-- ============================================================================
+
+-- Additional indexes for common queries
+CREATE INDEX idx_species_scientific_name ON species(scientific_name);
+CREATE INDEX idx_species_common_names ON species(common_names(100));
+CREATE INDEX idx_species_iucn_status ON species(iucn_status);
+
+CREATE INDEX idx_plant_characteristics_growth_habit ON plant_characteristics(growth_habit);
+CREATE INDEX idx_plant_characteristics_life_cycle ON plant_characteristics(life_cycle);
+
+CREATE INDEX idx_images_species_type ON images(species_id, image_type);
+CREATE INDEX idx_model_3d_species_type ON model_3d(species_id, model_type);
+
+CREATE INDEX idx_specimens_collection_date ON specimens(collection_date);
+CREATE INDEX idx_specimens_location ON specimens(latitude, longitude);
+
+CREATE INDEX idx_dna_sequences_gene_region ON dna_sequences(gene_region);
+CREATE INDEX idx_field_observations_date_species ON field_observations(observation_date, species_id);
+
+-- ============================================================================
+-- VISITOR TRACKING AND ANALYTICS TABLES
+-- ============================================================================
+
+CREATE TABLE visitor_sessions (
+    session_id VARCHAR(128) PRIMARY KEY,
+    visitor_id VARCHAR(64),
+    user_id INT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    user_agent TEXT,
+    device_type ENUM('Desktop', 'Mobile', 'Tablet', 'Bot', 'Unknown') DEFAULT 'Unknown',
+    browser_name VARCHAR(100),
+    browser_version VARCHAR(50),
+    operating_system VARCHAR(100),
+    screen_resolution VARCHAR(20),
+    language_preference VARCHAR(10),
+    country_code VARCHAR(3),
+    city VARCHAR(100),
+    region VARCHAR(100),
+    timezone VARCHAR(50),
+    is_new_visitor BOOLEAN DEFAULT TRUE,
+    is_returning_visitor BOOLEAN DEFAULT FALSE,
+    referrer_url TEXT,
+    referrer_domain VARCHAR(200),
+    referrer_type ENUM('Direct', 'Search_engine', 'Social_media', 'Email', 'Advertisement', 'External_link', 'Unknown') DEFAULT 'Unknown',
+    utm_source VARCHAR(100),
+    utm_medium VARCHAR(100),
+    utm_campaign VARCHAR(100),
+    utm_term VARCHAR(100),
+    utm_content VARCHAR(100),
+    entry_page VARCHAR(500),
+    landing_page_load_time_ms INT,
+    session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    session_end TIMESTAMP NULL,
+    session_duration_seconds INT DEFAULT 0,
+    page_views INT DEFAULT 0,
+    bounce_session BOOLEAN DEFAULT FALSE,
+    conversion_session BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_visitor_id (visitor_id),
+    INDEX idx_session_start (session_start),
+    INDEX idx_country_code (country_code),
+    INDEX idx_device_type (device_type),
+    INDEX idx_referrer_type (referrer_type),
+    INDEX idx_is_new_visitor (is_new_visitor)
+);
+
+CREATE TABLE page_views (
+    page_view_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128) NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    user_id INT NULL,
+    page_url VARCHAR(500) NOT NULL,
+    page_title VARCHAR(300),
+    page_category ENUM('Home', 'Species_detail', 'Search_results', 'Gallery', 'Research', 'Documentation', 'User_profile', 'Admin', 'API', 'Other') DEFAULT 'Other',
+    species_id INT NULL,
+    search_query VARCHAR(500),
+    search_results_count INT,
+    view_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    time_on_page_seconds INT DEFAULT 0,
+    scroll_depth_percentage DECIMAL(5,2) DEFAULT 0,
+    page_load_time_ms INT,
+    exit_page BOOLEAN DEFAULT FALSE,
+    interactions_count INT DEFAULT 0,
+    downloads_count INT DEFAULT 0,
+    images_viewed INT DEFAULT 0,
+    models_3d_loaded INT DEFAULT 0,
+    previous_page_url VARCHAR(500),
+    next_page_url VARCHAR(500),
+    http_status_code INT DEFAULT 200,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES visitor_sessions(session_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_visitor_id (visitor_id),
+    INDEX idx_page_category (page_category),
+    INDEX idx_view_timestamp (view_timestamp),
+    INDEX idx_species_id (species_id),
+    INDEX idx_page_url (page_url(255))
+);
+
+CREATE TABLE user_interactions (
+    interaction_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128) NOT NULL,
+    page_view_id BIGINT,
+    visitor_id VARCHAR(64) NOT NULL,
+    user_id INT NULL,
+    interaction_type ENUM('Click', 'Download', 'Search', 'Filter', 'Sort', 'Zoom', 'Rotate_3D', 'Share', 'Bookmark', 'Print', 'Export', 'Form_submit', 'Video_play', 'Image_view', 'Other') NOT NULL,
+    element_type VARCHAR(100),
+    element_id VARCHAR(200),
+    element_text VARCHAR(500),
+    element_position VARCHAR(50),
+    interaction_value TEXT,
+    species_id INT NULL,
+    file_downloaded VARCHAR(500),
+    download_size_mb DECIMAL(10,2),
+    search_filters JSON,
+    interaction_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    interaction_duration_ms INT,
+    successful BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    FOREIGN KEY (session_id) REFERENCES visitor_sessions(session_id),
+    FOREIGN KEY (page_view_id) REFERENCES page_views(page_view_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_interaction_type (interaction_type),
+    INDEX idx_interaction_timestamp (interaction_timestamp),
+    INDEX idx_species_id (species_id),
+    INDEX idx_successful (successful)
+);
+
+CREATE TABLE search_analytics (
+    search_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128) NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    user_id INT NULL,
+    search_query VARCHAR(500) NOT NULL,
+    search_type ENUM('Simple', 'Advanced', 'Scientific_name', 'Common_name', 'Location', 'Characteristics', 'Full_text') DEFAULT 'Simple',
+    search_filters JSON,
+    results_count INT DEFAULT 0,
+    results_clicked INT DEFAULT 0,
+    search_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    response_time_ms INT,
+    zero_results BOOLEAN DEFAULT FALSE,
+    refined_search BOOLEAN DEFAULT FALSE,
+    search_abandoned BOOLEAN DEFAULT FALSE,
+    conversion BOOLEAN DEFAULT FALSE,
+    ip_address VARCHAR(45),
+    FOREIGN KEY (session_id) REFERENCES visitor_sessions(session_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_search_query (search_query(255)),
+    INDEX idx_search_timestamp (search_timestamp),
+    INDEX idx_search_type (search_type),
+    INDEX idx_zero_results (zero_results),
+    INDEX idx_results_count (results_count)
+);
+
+CREATE TABLE content_engagement (
+    engagement_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128) NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    user_id INT NULL,
+    content_type ENUM('Species_profile', 'Image', '3D_model', 'Research_paper', 'Diagram', 'Video', 'Dataset', 'Documentation') NOT NULL,
+    content_id INT NOT NULL,
+    species_id INT NULL,
+    engagement_type ENUM('View', 'Download', 'Share', 'Bookmark', 'Print', 'Zoom', 'Rotate', 'Full_screen', 'Citation', 'Comment') NOT NULL,
+    engagement_duration_seconds INT DEFAULT 0,
+    engagement_depth DECIMAL(5,2) DEFAULT 0,
+    engagement_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    quality_score DECIMAL(3,2) DEFAULT 0,
+    user_rating TINYINT NULL,
+    shared_platform VARCHAR(50),
+    download_format VARCHAR(20),
+    citation_format VARCHAR(50),
+    FOREIGN KEY (session_id) REFERENCES visitor_sessions(session_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    INDEX idx_content_type_id (content_type, content_id),
+    INDEX idx_engagement_type (engagement_type),
+    INDEX idx_engagement_timestamp (engagement_timestamp),
+    INDEX idx_species_id (species_id),
+    INDEX idx_quality_score (quality_score)
+);
+
+CREATE TABLE api_usage_metrics (
+    api_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128),
+    api_key VARCHAR(100),
+    user_id INT NULL,
+    endpoint VARCHAR(200) NOT NULL,
+    http_method ENUM('GET', 'POST', 'PUT', 'DELETE', 'PATCH') NOT NULL,
+    request_parameters JSON,
+    response_status_code INT NOT NULL,
+    response_time_ms INT NOT NULL,
+    response_size_bytes INT,
+    request_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    rate_limited BOOLEAN DEFAULT FALSE,
+    cached_response BOOLEAN DEFAULT FALSE,
+    error_type VARCHAR(100),
+    error_message TEXT,
+    quota_usage_percentage DECIMAL(5,2),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_endpoint (endpoint),
+    INDEX idx_api_key (api_key),
+    INDEX idx_request_timestamp (request_timestamp),
+    INDEX idx_response_status_code (response_status_code),
+    INDEX idx_rate_limited (rate_limited)
+);
+
+CREATE TABLE conversion_events (
+    conversion_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(128) NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    user_id INT NULL,
+    conversion_type ENUM('Registration', 'Login', 'Data_download', 'Research_citation', 'API_signup', 'Newsletter_signup', 'Contact_form', 'Feedback_submission', 'Species_contribution', 'Other') NOT NULL,
+    conversion_value DECIMAL(10,2) DEFAULT 0,
+    conversion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    source_page VARCHAR(500),
+    conversion_funnel_stage INT DEFAULT 1,
+    time_to_conversion_seconds INT,
+    conversion_data JSON,
+    successful BOOLEAN DEFAULT TRUE,
+    revenue_attributed DECIMAL(10,2) DEFAULT 0,
+    FOREIGN KEY (session_id) REFERENCES visitor_sessions(session_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    INDEX idx_conversion_type (conversion_type),
+    INDEX idx_conversion_timestamp (conversion_timestamp),
+    INDEX idx_successful (successful),
+    INDEX idx_visitor_id (visitor_id)
+);
+
+-- ============================================================================
+-- MONTHLY ANALYTICS AND REPORTING TABLES
+-- ============================================================================
+
+CREATE TABLE monthly_visitor_metrics (
+    metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` CHAR(7) NOT NULL,
+
+    total_visitors INT DEFAULT 0,
+    unique_visitors INT DEFAULT 0,
+    new_visitors INT DEFAULT 0,
+    returning_visitors INT DEFAULT 0,
+    total_sessions INT DEFAULT 0,
+    total_page_views INT DEFAULT 0,
+    average_session_duration_seconds DECIMAL(10,2) DEFAULT 0,
+    average_pages_per_session DECIMAL(5,2) DEFAULT 0,
+    bounce_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    conversion_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    mobile_visitors_percentage DECIMAL(5,2) DEFAULT 0,
+    desktop_visitors_percentage DECIMAL(5,2) DEFAULT 0,
+    tablet_visitors_percentage DECIMAL(5,2) DEFAULT 0,
+
+    top_country_code VARCHAR(3),
+    top_browser VARCHAR(100),
+    top_os VARCHAR(100),
+
+    average_page_load_time_ms INT DEFAULT 0,
+    total_downloads INT DEFAULT 0,
+    total_searches INT DEFAULT 0,
+    total_api_calls INT DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_year_month (`year_month`),
+    INDEX idx_year_month (`year_month`)
+);
+
+CREATE TABLE monthly_content_metrics (
+    content_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+
+    content_type ENUM('Species_profile', 'Image', '3D_model', 'Research_paper', 'Diagram', 'Video', 'Dataset', 'Documentation') NOT NULL,
+
+    total_views INT DEFAULT 0,
+    unique_views INT DEFAULT 0,
+    total_downloads INT DEFAULT 0,
+    total_shares INT DEFAULT 0,
+    average_engagement_duration_seconds DECIMAL(10,2) DEFAULT 0,
+    average_quality_score DECIMAL(3,2) DEFAULT 0,
+
+    top_content_id INT,
+    top_content_views INT DEFAULT 0,
+
+    bounce_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    conversion_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    mobile_engagement_percentage DECIMAL(5,2) DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_month_content_type (`year_month`, content_type),
+    INDEX idx_year_month (`year_month`),
+    INDEX idx_content_type (content_type)
+);
+
+
+CREATE TABLE monthly_species_metrics (
+    species_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+
+    species_id INT NOT NULL,
+    total_views INT DEFAULT 0,
+    unique_visitors INT DEFAULT 0,
+    average_time_on_page_seconds DECIMAL(10,2) DEFAULT 0,
+    image_views INT DEFAULT 0,
+    model_3d_loads INT DEFAULT 0,
+    downloads INT DEFAULT 0,
+    shares INT DEFAULT 0,
+    bookmarks INT DEFAULT 0,
+    citations INT DEFAULT 0,
+    search_appearances INT DEFAULT 0,
+    search_clicks INT DEFAULT 0,
+    bounce_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    engagement_score DECIMAL(5,2) DEFAULT 0,
+    mobile_views_percentage DECIMAL(5,2) DEFAULT 0,
+    top_referring_domain VARCHAR(200),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+
+    UNIQUE KEY unique_month_species (`year_month`, species_id),
+    INDEX idx_year_month (`year_month`),
+    INDEX idx_species_id (species_id),
+    INDEX idx_total_views (total_views),
+    INDEX idx_engagement_score (engagement_score)
+);
+
+
+CREATE TABLE monthly_search_metrics (
+    search_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+
+    total_searches INT DEFAULT 0,
+    unique_searchers INT DEFAULT 0,
+    successful_searches INT DEFAULT 0,
+    zero_result_searches INT DEFAULT 0,
+    average_results_per_search DECIMAL(8,2) DEFAULT 0,
+    average_response_time_ms INT DEFAULT 0,
+    most_searched_term VARCHAR(500),
+    most_searched_term_count INT DEFAULT 0,
+    search_abandonment_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    search_refinement_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    search_to_view_conversion_rate DECIMAL(5,2) DEFAULT 0,
+    mobile_searches_percentage DECIMAL(5,2) DEFAULT 0,
+    advanced_searches_percentage DECIMAL(5,2) DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_year_month (`year_month`),
+    INDEX idx_year_month (`year_month`)
+);
+
+
+CREATE TABLE monthly_performance_metrics (
+    performance_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+
+    average_page_load_time_ms INT DEFAULT 0,
+    average_api_response_time_ms INT DEFAULT 0,
+    total_errors INT DEFAULT 0,
+    error_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    uptime_percentage DECIMAL(5,2) DEFAULT 0,
+    database_query_time_ms INT DEFAULT 0,
+    cache_hit_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    bandwidth_usage_gb DECIMAL(10,2) DEFAULT 0,
+    storage_usage_gb DECIMAL(10,2) DEFAULT 0,
+    cdn_usage_gb DECIMAL(10,2) DEFAULT 0,
+    peak_concurrent_users INT DEFAULT 0,
+    slowest_page VARCHAR(500),
+    slowest_page_load_time_ms INT DEFAULT 0,
+    most_frequent_error VARCHAR(200),
+    most_frequent_error_count INT DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_year_month (`year_month`),
+    INDEX idx_year_month (`year_month`)
+);
+
+
+CREATE TABLE monthly_user_metrics (
+    user_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+
+    total_registered_users INT DEFAULT 0,
+    new_registrations INT DEFAULT 0,
+    active_users INT DEFAULT 0,
+    inactive_users INT DEFAULT 0,
+    user_retention_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    average_session_per_user DECIMAL(5,2) DEFAULT 0,
+    average_contributions_per_user DECIMAL(5,2) DEFAULT 0,
+    power_users_count INT DEFAULT 0,
+    researchers_count INT DEFAULT 0,
+    students_count INT DEFAULT 0,
+    casual_users_count INT DEFAULT 0,
+    suspended_users_count INT DEFAULT 0,
+    user_satisfaction_score DECIMAL(3,2) DEFAULT 0,
+    most_active_institution VARCHAR(200),
+    most_active_country VARCHAR(100),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_year_month (`year_month`),
+    INDEX idx_year_month (`year_month`)
+);
+
+
+CREATE TABLE monthly_geographic_metrics (
+    geo_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+    `country_code` VARCHAR(3) NOT NULL,
+
+    country_name VARCHAR(100),
+    total_visitors INT DEFAULT 0,
+    unique_visitors INT DEFAULT 0,
+    total_sessions INT DEFAULT 0,
+    total_page_views INT DEFAULT 0,
+    average_session_duration_seconds DECIMAL(10,2) DEFAULT 0,
+    bounce_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    conversion_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    mobile_percentage DECIMAL(5,2) DEFAULT 0,
+    new_visitors_percentage DECIMAL(5,2) DEFAULT 0,
+    top_city VARCHAR(100),
+    top_language VARCHAR(10),
+    total_downloads INT DEFAULT 0,
+    api_usage_count INT DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_month_country (`year_month`, `country_code`),
+    INDEX idx_year_month (`year_month`),
+    INDEX idx_country_code (`country_code`),
+    INDEX idx_total_visitors (`total_visitors`)
+);
+
+
+CREATE TABLE monthly_referrer_metrics (
+    referrer_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    `year_month` DATE NOT NULL,
+    `referrer_domain` VARCHAR(200) NOT NULL,
+
+    referrer_type ENUM('Direct', 'Search_engine', 'Social_media', 'Email', 'Advertisement', 'External_link', 'Unknown') DEFAULT 'Unknown',
+    total_visits INT DEFAULT 0,
+    unique_visitors INT DEFAULT 0,
+    conversion_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    bounce_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    average_session_duration_seconds DECIMAL(10,2) DEFAULT 0,
+    pages_per_session DECIMAL(5,2) DEFAULT 0,
+    total_conversions INT DEFAULT 0,
+    revenue_attributed DECIMAL(10,2) DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_month_referrer (`year_month`, `referrer_domain`),
+    INDEX idx_year_month (`year_month`),
+    INDEX idx_referrer_type (`referrer_type`),
+    INDEX idx_total_visits (`total_visits`)
+);
+
+
+CREATE TABLE monthly_api_metrics (
+    api_metric_id INT PRIMARY KEY AUTO_INCREMENT,
+    `year_month` DATE NOT NULL,
+    `endpoint` VARCHAR(200) NOT NULL,
+
+    total_requests INT DEFAULT 0,
+    unique_users INT DEFAULT 0,
+    successful_requests INT DEFAULT 0,
+    failed_requests INT DEFAULT 0,
+    average_response_time_ms INT DEFAULT 0,
+    total_response_size_mb DECIMAL(12,2) DEFAULT 0,
+    rate_limited_requests INT DEFAULT 0,
+    cached_responses INT DEFAULT 0,
+    most_active_api_key VARCHAR(100),
+    peak_requests_per_hour INT DEFAULT 0,
+    error_rate_percentage DECIMAL(5,2) DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_month_endpoint (`year_month`, `endpoint`),
+    INDEX idx_year_month (`year_month`),
+    INDEX idx_endpoint (`endpoint`),
+    INDEX idx_total_requests (`total_requests`)
+);
+
+
+-- ============================================================================
+-- REAL-TIME ANALYTICS TABLES
+-- ============================================================================
+
+CREATE TABLE real_time_metrics (
+    metric_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    metric_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    active_visitors INT DEFAULT 0,
+    active_sessions INT DEFAULT 0,
+    page_views_last_hour INT DEFAULT 0,
+    page_views_last_minute INT DEFAULT 0,
+    searches_last_hour INT DEFAULT 0,
+    downloads_last_hour INT DEFAULT 0,
+    api_calls_last_hour INT DEFAULT 0,
+    errors_last_hour INT DEFAULT 0,
+    average_response_time_ms INT DEFAULT 0,
+    server_cpu_usage_percentage DECIMAL(5,2) DEFAULT 0,
+    server_memory_usage_percentage DECIMAL(5,2) DEFAULT 0,
+    database_connections INT DEFAULT 0,
+    cache_hit_rate_percentage DECIMAL(5,2) DEFAULT 0,
+    top_page_current_hour VARCHAR(500),
+    top_search_current_hour VARCHAR(500),
+    INDEX idx_metric_timestamp (metric_timestamp)
+);
+
+CREATE TABLE popular_content_daily (
+    popular_id INT PRIMARY KEY AUTO_INCREMENT,
+    content_date DATE NOT NULL,
+    content_type ENUM('Species_profile', 'Image', '3D_model', 'Research_paper', 'Diagram', 'Video', 'Dataset', 'Documentation') NOT NULL,
+    content_id INT NOT NULL,
+    species_id INT NULL,
+    view_count INT DEFAULT 0,
+    unique_visitors INT DEFAULT 0,
+    engagement_score DECIMAL(5,2) DEFAULT 0,
+    ranking_position INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (species_id) REFERENCES species(species_id),
+    UNIQUE KEY unique_date_content (content_date, content_type, content_id),
+    INDEX idx_content_date (content_date),
+    INDEX idx_ranking_position (ranking_position),
+    INDEX idx_engagement_score (engagement_score)
+);
+
+-- ============================================================================
+-- INDEXES FOR ANALYTICS PERFORMANCE
+-- ============================================================================
+
+-- Additional indexes for analytics queries
+CREATE INDEX idx_visitor_sessions_date_device ON visitor_sessions(session_start, device_type);
+CREATE INDEX idx_page_views_timestamp_category ON page_views(view_timestamp, page_category);
+CREATE INDEX idx_interactions_timestamp_type ON user_interactions(interaction_timestamp, interaction_type);
+CREATE INDEX idx_search_analytics_timestamp_results ON search_analytics(search_timestamp, results_count);
+CREATE INDEX idx_content_engagement_timestamp_type ON content_engagement(engagement_timestamp, content_type);
+
+-- Composite indexes for common reporting queries
+CREATE INDEX idx_monthly_metrics_lookup ON monthly_visitor_metrics(year_month, total_visitors, unique_visitors);
+CREATE INDEX idx_species_metrics_popularity ON monthly_species_metrics(year_month, total_views, engagement_score);
+CREATE INDEX idx_geographic_performance ON monthly_geographic_metrics(year_month, country_code, total_visitors);
+
+-- ============================================================================
+-- END OF ANALYTICS SCHEMA
+-- ============================================================================

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.xash.sprout.app.core.manager.AnimatedNavigationHost
 import com.xash.sprout.app.experimental.SpeedometerPreview
+import com.xash.sprout.app.experimental.api.MainScreen
 import com.xash.sprout.app.experimental.coilDemo.ImageScreen
 import com.xash.sprout.app.experimental.scratch_card.ScratchCardDemo
 import com.xash.sprout.app.experimental.scratch_card.ScratchCardDemo2
@@ -38,7 +39,9 @@ class MainActivity : ComponentActivity() {
                     //YouTubeEmbedScreen()
                     //YouTubeScreen()
                     //ImageScreen()
-                    SpeedometerPreview()
+                    //SpeedometerPreview()
+
+                    MainScreen()
                 }
             }
         }
