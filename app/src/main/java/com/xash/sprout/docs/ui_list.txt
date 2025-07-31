@@ -1,0 +1,273 @@
+Admin Version Screens:
+Admin Login
+
+Email/Password fields
+
+Database: users table (role='admin')
+
+Dashboard
+
+Key metrics widgets (total users, active plants, AI usage)
+
+Database: Aggregated queries from multiple tables
+
+User Management
+
+User list with search/filters
+
+User detail view (profile, plants, activity)
+
+Database: users, user_plants, activity_logs
+
+Plant Database
+
+CRUD interface for plant species
+
+Disease/Remedy management
+
+Database: species, plant_diseases, treatment_methods
+
+AI Model Management
+
+Training data upload (plant images)
+
+Model performance metrics
+
+Database: ai_training_data, model_performance
+
+Device Management
+
+Registered IoT devices list
+
+Device health monitoring
+
+Database: iot_devices, device_metrics
+
+Content Management
+
+Care tip articles editor
+
+Push notification composer
+
+Database: educational_content, notifications
+
+Analytics Hub
+
+User engagement metrics
+
+Plant health trends
+
+Regional adoption heatmap
+
+Database: monthly_visitor_metrics, monthly_species_metrics
+
+Plantation Events
+
+Create/manage planting events
+
+Participant tracking
+
+Database: plantation_events, event_participants
+
+Admin Settings
+
+API key management
+
+Data export tools
+
+Database: api_keys, data_exports
+
+User Version Screens:
+Onboarding Flow
+
+Account creation
+
+Plant preference quiz
+
+Database: users, user_preferences
+
+Home Garden
+
+Virtual garden visualization
+
+Plant health status cards
+
+Database: user_plants, plant_health_records
+
+Plant Scanner
+
+Camera interface for plant ID
+
+Disease detection results
+
+Database: plant_scans, disease_detection_results
+
+Plant Care Hub
+
+Watering/fertilizing schedule
+
+Custom care reminders
+
+Database: care_schedules, reminders
+
+Plant Journal
+
+Growth timeline with photos
+
+Health milestone tracking
+
+Database: plant_journals, growth_milestones
+
+Plant Encyclopedia
+
+Searchable plant database
+
+Species detail pages
+
+Database: species, care_guides
+
+Environment Impact
+
+CO2 reduction dashboard
+
+Biodiversity contribution
+
+Database: environment_impact, user_contributions
+
+Plant Doctor
+
+Symptom checker
+
+Treatment recommendations
+
+Database: disease_symptoms, treatment_methods
+
+Community Leaderboard
+
+Top plant caretakers
+
+Achievement badges
+
+Database: user_scores, achievements
+
+Shop Integration
+
+Plant care product listings
+
+Device recommendations
+
+Database: products, user_purchases
+
+Profile Settings
+
+Personal information
+
+Connected devices
+
+Notification preferences
+
+Database: user_profiles, device_connections
+
+Database Access Flow:
+User Authentication
+
+users table validation
+
+JWT token generation
+
+Data Retrieval
+
+Plant data: species + care_guides
+
+User data: user_plants + plant_journals
+
+Analytics: monthly_metrics tables
+
+AI Processing
+
+Image upload to plant_scans
+
+Results saved to disease_detection_results
+
+Device Integration
+
+IoT data to device_metrics
+
+Actions to device_commands
+
+Content Delivery
+
+Personalized tips from educational_content
+
+Notifications from user_preferences
+
+Event Management
+
+Registration to event_participants
+
+Location data to plantation_events
+
+Key Database Tables:
+users (user_id, email, role, join_date)
+
+user_plants (plant_id, user_id, species_id, nickname, location)
+
+plant_health (health_id, plant_id, health_score, last_check)
+
+care_schedules (schedule_id, plant_id, action_type, frequency)
+
+species (species_id, scientific_name, care_instructions)
+
+diseases (disease_id, species_id, symptoms, treatment)
+
+ai_scans (scan_id, user_id, image_path, result)
+
+environment_impact (impact_id, user_id, co2_reduced, biodiversity_score)
+
+community_scores (user_id, points, rank)
+
+iot_devices (device_id, user_id, type, last_reading)
+
+Security Implementation:
+Role-based Access Control
+
+Admin: Full database access
+
+Users: Own data only via user_id
+
+Data Encryption
+
+Sensitive fields at rest (AES-256)
+
+TLS for data in transit
+
+Audit Logs
+
+All admin actions to admin_activity_logs
+
+Data exports to data_access_logs
+
+Analytics Pipeline:
+User Engagement
+
+DAU/MAU from session_logs
+
+Feature usage from feature_usage
+
+Plant Health Trends
+
+Species health averages
+
+Treatment success rates
+
+AI Performance
+
+Scan accuracy rates
+
+False positive tracking
+
+Device Effectiveness
+
+Plant health correlation
+
+Usage patterns
